@@ -72,7 +72,7 @@ async function captureMessageScreenshot(messageText) {
   console.log("✅ Telegram connected");
   console.log("Session string:", tgClient.session.save());
 
-  const channel = await tgClient.getEntity("@@NewListingsFeed");
+  const channel = await tgClient.getEntity("@NewListingsFeed");
 
   let lastPostTime = 0;
 
