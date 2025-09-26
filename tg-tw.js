@@ -29,7 +29,19 @@ const RATE_LIMIT_MS = 15000; // 15 seconds between posts
 
 // ==== Puppeteer screenshot function (cropped) ====
 async function captureMessageScreenshot(messageText) {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ 
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process',
+      '--disable-gpu'
+    ]
+  });
   const page = await browser.newPage();
 
   await page.goto("https://web.telegram.org/k/", { waitUntil: "networkidle2" });
