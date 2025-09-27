@@ -5,7 +5,13 @@ import { StringSession } from "telegram/sessions/index.js";
 import input from "input";
 import puppeteer from "puppeteer";
 import dotenv from "dotenv";
+import OpenAI from "openai";
+
 dotenv.config();
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // ==== Twitter API ====
 const twitterClient = new TwitterApi({
@@ -27,20 +33,49 @@ const tgClient = new TelegramClient(stringSession, apiId, apiHash, {
 const postedMessages = new Set();
 const RATE_LIMIT_MS = 15000; // 15 seconds between posts
 
+// message generate by openAI
+async function generateHumanContent(originalText) {
+  try {
+    const prompt = `
+Rewrite the following text as a natural, human-like tweet that is engaging, readable, and professional. 
+- Do NOT use emojis. 
+- Provide details about the project and its listing.
+- Use proper punctuation, spacing, and line breaks for readability.
+- Include relevant hashtags and tag the project so it can gain kaito yap.
+- Make sure the text is 280 characters or less.
+- Avoid making it look AI-generated.
+
+Original text: "${originalText}"
+`;
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // human-like responses, fast
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.8, // makes it more creative
+      max_tokens: 150,
+    });
+
+    return response.choices[0].message.content.trim();
+  } catch (err) {
+    console.error("Error generating human content:", err);
+    return originalText; // fallback to original
+  }
+}
+
 // ==== Puppeteer screenshot function (cropped) ====
 async function captureMessageScreenshot(messageText) {
-  const browser = await puppeteer.launch({ 
+  const browser = await puppeteer.launch({
     headless: true,
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-accelerated-2d-canvas',
-      '--no-first-run',
-      '--no-zygote',
-      '--single-process',
-      '--disable-gpu'
-    ]
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-accelerated-2d-canvas",
+      "--no-first-run",
+      "--no-zygote",
+      "--single-process",
+      "--disable-gpu",
+    ],
   });
   const page = await browser.newPage();
 
@@ -84,8 +119,12 @@ async function captureMessageScreenshot(messageText) {
   console.log("✅ Telegram connected");
   console.log("Session string:", tgClient.session.save());
 
-  // const channel = await tgClient.getEntity("@NewListingsFeed");
-  const channel = await tgClient.getEntity("@tgtwitterbts");
+  const entitiy = process.env.ENTITY;
+
+  const channel = await tgClient.getEntity(
+    `@${entitiy ? entitiy : "tgtwitterbts"}`
+  );
+  // const channel = await tgClient.getEntity("@tgtwitterbts");
 
   let lastPostTime = 0;
 
@@ -123,9 +162,12 @@ async function captureMessageScreenshot(messageText) {
         // console.log({ mediaId });
 
         // await twitterClient.v1.tweet(text, { media_ids: mediaId });
-        await twitterClient.v2.tweet(text);
+        // Generate human-like content
+        const humanText = await generateHumanContent(text);
 
-        console.log("✅ Posted to Twitter safely (text + image)");
+        await twitterClient.v2.tweet(humanText);
+
+        console.log("✅ Posted to Twitter safely:-", humanText);
       }
     } catch (err) {
       console.error("Error posting:", err);
