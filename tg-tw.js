@@ -9,7 +9,7 @@ import OpenAI from "openai";
 
 dotenv.config();
 
-const TWITTERVERIED = true;
+const TWITTERVERIED = false;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -120,7 +120,9 @@ async function postTweet(promptCap) {
   try {
     const tweetText = normalizeAndLimit(tweet);
     console.log("Found tweet text:-----", tweetText);
-    await twitterClient.v2.tweet(tweetText);
+    await twitterClient.v2.tweet({
+      text: tweetText,
+    });
     console.log("✅ Posted:", tweetText);
   } catch (err) {
     console.error("❌ Error posting tweet:", err);
@@ -176,8 +178,8 @@ console.log("Bot started / posts 5 times daily with safe timing.");
   });
 
   console.log("✅ Telegram connected");
-  tgClient.session.save();
-
+  // tgClient.session.save();
+  console.log(tgClient.session.save());
   const entitiy = process.env.ENTITY;
 
   const channel = await tgClient.getEntity(
@@ -225,7 +227,7 @@ console.log("Bot started / posts 5 times daily with safe timing.");
         const promptForNews = `
         Rewrite the following text as a natural, human-like tweet that is engaging, readable, and professional. 
         - Do NOT use emojis. 
-        - Use proper punctuation, spacing, and line breaks for readability.
+        - must be Use proper punctuation, spacing, and line breaks for readability.
         - Include relevant hashtags.
         - Make sure the text is 280 characters or less.
         - Avoid making it look AI-generated.
