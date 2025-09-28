@@ -120,7 +120,7 @@ async function postTweet(promptCap) {
   try {
     const tweetText = normalizeAndLimit(tweet);
     console.log("Found tweet text:-----", tweetText);
-    // await twitterClient.v2.tweet(tweetText);
+    await twitterClient.v2.tweet(tweetText);
     console.log("✅ Posted:", tweetText);
   } catch (err) {
     console.error("❌ Error posting tweet:", err);
