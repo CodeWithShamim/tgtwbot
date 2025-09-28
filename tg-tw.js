@@ -9,6 +9,8 @@ import OpenAI from "openai";
 
 dotenv.config();
 
+const TWITTERVERIED = true;
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
@@ -34,20 +36,8 @@ const postedMessages = new Set();
 const RATE_LIMIT_MS = 15000; // 15 seconds between posts
 
 // message generate by openAI
-async function generateHumanContent(originalText) {
+async function generateHumanContent(prompt) {
   try {
-    const prompt = `
-Rewrite the following text as a natural, human-like tweet that is engaging, readable, and professional. 
-- Do NOT use emojis. 
-- Provide details about the project and its listing.
-- Use proper punctuation, spacing, and line breaks for readability.
-- Include relevant hashtags and tag the project so it can gain kaito yap.
-- Make sure the text is 280 characters or less.
-- Avoid making it look AI-generated.
-
-Original text: "${originalText}"
-`;
-
     const response = await openai.chat.completions.create({
       model: "gpt-4o-mini", // human-like responses, fast
       messages: [{ role: "user", content: prompt }],
@@ -58,53 +48,122 @@ Original text: "${originalText}"
     return response.choices[0].message.content.trim();
   } catch (err) {
     console.error("Error generating human content:", err);
-    return originalText; // fallback to original
   }
 }
 
 // ==== Puppeteer screenshot function (cropped) ====
-async function captureMessageScreenshot(messageText) {
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: [
-      "--no-sandbox",
-      "--disable-setuid-sandbox",
-      "--disable-dev-shm-usage",
-      "--disable-accelerated-2d-canvas",
-      "--no-first-run",
-      "--no-zygote",
-      "--single-process",
-      "--disable-gpu",
-    ],
-  });
-  const page = await browser.newPage();
+// async function captureMessageScreenshot(messageText) {
+//   const browser = await puppeteer.launch({
+//     headless: true,
+//     args: [
+//       "--no-sandbox",
+//       "--disable-setuid-sandbox",
+//       "--disable-dev-shm-usage",
+//       "--disable-accelerated-2d-canvas",
+//       "--no-first-run",
+//       "--no-zygote",
+//       "--single-process",
+//       "--disable-gpu",
+//     ],
+//   });
+//   const page = await browser.newPage();
 
-  await page.goto("https://web.telegram.org/k/", { waitUntil: "networkidle2" });
-  console.log("Log in manually if needed within 15s...");
-  // await page.waitForTimeout(15000); // 15 seconds
-  await new Promise((r) => setTimeout(r, 15000));
+//   await page.goto("https://web.telegram.org/k/", { waitUntil: "networkidle2" });
+//   console.log("Log in manually if needed within 15s...");
+//   // await page.waitForTimeout(15000); // 15 seconds
+//   await new Promise((r) => setTimeout(r, 15000));
 
-  await page.waitForSelector(".message");
+//   await page.waitForSelector(".message");
 
-  const [messageElement] = await page.$x(
-    `//div[contains(@class,'message') and contains(text(),'${messageText}')]`
-  );
+//   const [messageElement] = await page.$x(
+//     `//div[contains(@class,'message') and contains(text(),'${messageText}')]`
+//   );
 
-  if (!messageElement) {
-    console.log("Message not found for screenshot");
-    await browser.close();
-    return null;
-  }
+//   if (!messageElement) {
+//     console.log("Message not found for screenshot");
+//     await browser.close();
+//     return null;
+//   }
 
-  // Crop screenshot to just the message content
-  const box = await messageElement.boundingBox();
-  const screenshotBuffer = await page.screenshot({
-    clip: { x: box.x, y: box.y, width: box.width, height: box.height },
-  });
+//   // Crop screenshot to just the message content
+//   const box = await messageElement.boundingBox();
+//   const screenshotBuffer = await page.screenshot({
+//     clip: { x: box.x, y: box.y, width: box.width, height: box.height },
+//   });
 
-  await browser.close();
-  return screenshotBuffer;
+//   await browser.close();
+//   return screenshotBuffer;
+// }
+
+// --------------------------------------------------------------------------------
+function normalizeAndLimit(text) {
+  if (TWITTERVERIED) return text;
+
+  if (!text) return "";
+  let t = text
+    .replace(/\r\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+  t = t.replace(/[ \t]{2,}/g, " ");
+  if (t.length <= 280) return t;
+  // try to cut at sentence boundary, fallback safe truncation
+  const cut = t.slice(0, 280);
+  const lastPunct = cut.lastIndexOf(". ");
+  return (lastPunct > 50 ? cut.slice(0, lastPunct + 1) : cut).trimEnd();
 }
+
+// === Post to Twitter safely ===
+async function postTweet(promptCap) {
+  const tweet = await generateHumanContent(promptCap);
+  if (!tweet) return;
+
+  try {
+    const tweetText = normalizeAndLimit(tweet);
+    console.log("Found tweet text:-----", tweetText);
+    // await twitterClient.v2.tweet(tweetText);
+    console.log("✅ Posted:", tweetText);
+  } catch (err) {
+    console.error("❌ Error posting tweet:", err);
+  }
+}
+
+// === Safe scheduler: 5 random posts/day ===
+function schedulePosts() {
+  const promptForKite = ` Write a natural, human-like tweet thread about @GoKiteAI.  
+        It should read like a short article-style post (longer than a single tweet), with no title or headings.  
+
+        Use knowledge from https://gokite.ai/ but do not include or share the link in the output.  
+
+        Requirements:  
+        - Always tag @GoKiteAI.  
+        - Keep the tone professional, informative, and concise.  
+        - Use proper punctuation, spacing, and line breaks for readability.  
+        - Do not use emojis.  
+        - Avoid generic or AI-generated sounding phrases.    
+        `;
+
+  const hours = [9, 13, 17, 21, 1]; // base hours
+  hours.forEach((hour) => {
+    // add random delay (0–20 min) to look human
+    const delay = Math.floor(Math.random() * 20);
+    const now = new Date();
+    const target = new Date();
+
+    target.setHours(hour, delay, 0, 0);
+    if (target < now) target.setDate(target.getDate() + 1);
+
+    const msUntilPost = target - now;
+    setTimeout(function run() {
+      postTweet(promptForKite);
+      setTimeout(run, 24 * 60 * 60 * 1000); // repeat daily
+    }, msUntilPost);
+  });
+}
+
+schedulePosts();
+console.log("Bot started / posts 5 times daily with safe timing.");
+
+// --------------------------------------------------------------------------------
 
 // ==== Main Telegram Listener ====
 (async () => {
@@ -117,7 +176,7 @@ async function captureMessageScreenshot(messageText) {
   });
 
   console.log("✅ Telegram connected");
-  console.log("Session string:", tgClient.session.save());
+  tgClient.session.save();
 
   const entitiy = process.env.ENTITY;
 
@@ -163,11 +222,18 @@ async function captureMessageScreenshot(messageText) {
 
         // await twitterClient.v1.tweet(text, { media_ids: mediaId });
         // Generate human-like content
-        const humanText = await generateHumanContent(text);
+        const promptForNews = `
+        Rewrite the following text as a natural, human-like tweet that is engaging, readable, and professional. 
+        - Do NOT use emojis. 
+        - Use proper punctuation, spacing, and line breaks for readability.
+        - Include relevant hashtags.
+        - Make sure the text is 280 characters or less.
+        - Avoid making it look AI-generated.
 
-        await twitterClient.v2.tweet(humanText);
+        Original text: "${text}"
+        `;
 
-        console.log("✅ Posted to Twitter safely:-", humanText);
+        postTweet(promptForNews);
       }
     } catch (err) {
       console.error("Error posting:", err);
