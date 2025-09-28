@@ -122,39 +122,36 @@ async function postTweet(promptCap, promptType = "news") {
     const tweetText = normalizeAndLimit(tweet);
     console.log("Found tweet text:-----", tweetText);
 
-    // const mediaData = fs.readFileSync("./image5.jpg");
-
-    // const mediaResponse = await twitterClient.v2.uploadMedia(mediaData, {
-    //   media_category: "tweet_image",
-    // });
-
-    // console.log({ mediaResponse });
-
-    // // check media key
-    // if (!mediaResponse) {
-    //   console.error("❌ Media upload failed", mediaResponse);
-    //   return;
-    // }
-
     const mediaIds = [
-      "1972285264895860737",
-      "1972285641821216768",
-      "1972285782066171904",
-      "1972285904590094336",
-      "1972285995002568704",
+      "image1.jpg_large",
+      "image2.png",
+      "image3.jpeg",
+      "image4.jpg",
+      "image5.jpg",
     ];
 
     function getRandomMediaId() {
       return mediaIds[Math.floor(Math.random() * mediaIds.length)];
     }
 
+    const syncFS = promptType == "custom" ? getRandomMediaId() : "image.png";
+
+    const mediaData = fs.readFileSync(syncFS);
+
+    const mediaResponse = await twitterClient.v2.uploadMedia(mediaData, {
+      media_category: "tweet_image",
+    });
+
+    // check media key
+    if (!mediaResponse) {
+      console.error("❌ Media upload failed", mediaResponse);
+      return;
+    }
+
     await twitterClient.v2.tweet({
       text: tweetText,
       media: {
-        media_ids:
-          promptType == "custom"
-            ? [getRandomMediaId()]
-            : ["1972277025630216192"],
+        media_ids: [mediaResponse],
       },
     });
     console.log("✅ Posted:", tweetText);
@@ -178,7 +175,7 @@ function schedulePosts() {
         - Avoid generic or AI-generated sounding phrases.    
         `;
 
-  const hours = [9, 12, 13, 15, 17, 19, 21, 1, 4, 7]; // base hours
+  const hours = [9, 11, 13, 17, 21, 1, 4, 7]; // base hours
   hours.forEach((hour) => {
     // add random delay (0–20 min) to look human
     const delay = Math.floor(Math.random() * 20);
@@ -197,7 +194,7 @@ function schedulePosts() {
 }
 
 schedulePosts();
-console.log("Bot started / posts 5 times daily with safe timing.");
+console.log("Bot started / posts 10 times daily with safe timing.");
 
 // --------------------------------------------------------------------------------
 
@@ -259,7 +256,7 @@ console.log("Bot started / posts 5 times daily with safe timing.");
         // await twitterClient.v1.tweet(text, { media_ids: mediaId });
         // Generate human-like content
         const promptForNews = `
-        Rewrite the following text as a natural, human-like tweet that is engaging, readable, and professional. 
+        Rewrite the following text as a natural, don't use "we have a" text, human-like tweet that is engaging, readable, and professional. 
         - Do NOT use emojis. 
         - must be Use proper punctuation, spacing, and line breaks for readability.
         - Include relevant hashtags.
