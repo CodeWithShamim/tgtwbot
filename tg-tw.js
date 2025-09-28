@@ -6,10 +6,11 @@ import input from "input";
 import puppeteer from "puppeteer";
 import dotenv from "dotenv";
 import OpenAI from "openai";
+import fs from "fs";
 
 dotenv.config();
 
-const TWITTERVERIED = true;
+const TWITTERVERIED = false;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -113,15 +114,48 @@ function normalizeAndLimit(text) {
 }
 
 // === Post to Twitter safely ===
-async function postTweet(promptCap) {
+async function postTweet(promptCap, promptType = "news") {
   const tweet = await generateHumanContent(promptCap);
   if (!tweet) return;
 
   try {
     const tweetText = normalizeAndLimit(tweet);
     console.log("Found tweet text:-----", tweetText);
+
+    // const mediaData = fs.readFileSync("./image5.jpg");
+
+    // const mediaResponse = await twitterClient.v2.uploadMedia(mediaData, {
+    //   media_category: "tweet_image",
+    // });
+
+    // console.log({ mediaResponse });
+
+    // // check media key
+    // if (!mediaResponse) {
+    //   console.error("❌ Media upload failed", mediaResponse);
+    //   return;
+    // }
+
+    const mediaIds = [
+      "1972285264895860737",
+      "1972285641821216768",
+      "1972285782066171904",
+      "1972285904590094336",
+      "1972285995002568704",
+    ];
+
+    function getRandomMediaId() {
+      return mediaIds[Math.floor(Math.random() * mediaIds.length)];
+    }
+
     await twitterClient.v2.tweet({
       text: tweetText,
+      media: {
+        media_ids:
+          promptType == "custom"
+            ? [getRandomMediaId()]
+            : ["1972277025630216192"],
+      },
     });
     console.log("✅ Posted:", tweetText);
   } catch (err) {
@@ -144,7 +178,7 @@ function schedulePosts() {
         - Avoid generic or AI-generated sounding phrases.    
         `;
 
-  const hours = [9, 13, 17, 21, 1]; // base hours
+  const hours = [9, 12, 13, 15, 17, 19, 21, 1, 4, 7]; // base hours
   hours.forEach((hour) => {
     // add random delay (0–20 min) to look human
     const delay = Math.floor(Math.random() * 20);
@@ -156,7 +190,7 @@ function schedulePosts() {
 
     const msUntilPost = target - now;
     setTimeout(function run() {
-      postTweet(promptForKite);
+      postTweet(promptForKite, "custom");
       setTimeout(run, 24 * 60 * 60 * 1000); // repeat daily
     }, msUntilPost);
   });
