@@ -9,7 +9,7 @@ import OpenAI from "openai";
 
 dotenv.config();
 
-const TWITTERVERIED = false;
+const TWITTERVERIED = true;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
