@@ -39,12 +39,10 @@ const stringSession = new StringSession(process.env.TG_SESSION || "");
 async function generateHumanContent(prompt) {
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // human-like responses, fast
+      model: "gpt-4o-mini-2024-07-18", // human-like responses, fast
       messages: [{ role: "user", content: prompt }],
       temperature: 0.85, // adds natural creativity
-      presence_penalty: 0.6, // encourages new ideas
-      frequency_penalty: 0.4, // reduces repetition
-      max_tokens: 400, // allow longer, richer responses
+      max_tokens: 200, // allow longer, richer responses
     });
 
     return response.choices[0].message.content.trim();
@@ -82,10 +80,8 @@ async function postTweet(promptCap, promptType = "news") {
     const mediaIds = [
       "public/image.png",
       "public/image1.png",
-      "public/image3.jpeg",
       "public/image4.jpg",
       "public/image5.jpg",
-      "public/6.jpg",
       "public/7.webp",
       "public/8.webp",
       "public/9.png",
@@ -96,7 +92,6 @@ async function postTweet(promptCap, promptType = "news") {
       "public/14.png",
       "public/15.jpg",
       "public/16.jpg",
-      "public/17.jpg",
       "public/18.jpeg",
     ];
 
@@ -121,12 +116,12 @@ async function postTweet(promptCap, promptType = "news") {
     // console.log({ mediaResponse });
 
     await twitterClient.v2.tweet({
-      text: tweetText,
+      text: `.${tweetText}`,
       media: {
         media_ids: [mediaResponse],
       },
     });
-    console.log("✅ Posted:", tweetText);
+    console.log("✅ Posted:", `.${tweetText}`);
   } catch (err) {
     console.error("❌ Error posting tweet:", err);
   }
@@ -147,39 +142,31 @@ function schedulePosts() {
   //       - Avoid generic or AI-generated sounding phrases.
   //       `;
 
-  const openingStyles = [
-    "Ask a thought-provoking question.",
-    "Begin with a vivid image or metaphor.",
-    "Start with a bold statement.",
-    "Open with a personal reflection or universal truth.",
-    "Use a poetic or philosophical sentence to draw attention.",
-  ];
+  const promptForKite = `
+Write a short article-style post about @GoKiteAI.
 
-  const promptForKite = ` ${
-    openingStyles[Math.floor(Math.random() * openingStyles.length)]
-  } Write a natural, human-like tweet thread about @GoKiteAI.
+Do not use any title or headings.
 
-            Your writing should embody the spirit of the "Wind Runner" initiative — authentic, insightful, and human. 
-            Avoid sounding like marketing or AI-generated content. Write with the tone of a genuine creator who contributes meaningfully to the Kite AI ecosystem.
+Write in one continuous flow, but use natural line breaks to make it readable.
 
-            Draw inspiration from the "Kite AI: Wind Runner" philosophy:
-            - It honors creators who help build community culture through original, high-quality ideas.
-            - It values authenticity, creativity, long-term thinking, and human originality over volume or self-promotion.
-            - It celebrates those who shape the wind — not chase it — by pushing the boundaries of thought in AI, reputation, and agentic systems.
+No emojis, no hashtags, do not use the "—" character, no bullet points, and no dashes.
 
-            Guidelines:
-            - Mention @GoKiteAI exactly once.
-            - Do NOT use any "—" characters, emojis, hashtags, or links.
-            - Avoid phrases like "in a" or “in the rapidly changing world” or “revolutionizing the future.”
-            - Focus on one strong, clear idea that connects with Kite AI’s vision — such as agentic payments, authentic creation, community culture, trustless collaboration, or reputation systems.
-            - Use professional, reflective, and poetic tone — a balance between intellect and emotion.
-            - Keep it concise but meaningful, with natural line breaks between thoughts.
-            - Every output must feel original, as if written by a thinker, not an algorithm.
+Use simple, clear, human-like language.
 
-            The goal: create a daily thread that feels like a contribution to the Wind Runner movement — a spark of insight that helps Kite AI soar higher.
-            `;
+Use short sentences and natural line breaks to make the text easy to read.
 
-  const hours = [9, 11, 16, 18, 21, 22];
+Focus on how @GoKiteAI supports creators, builds trust, and grows a real community around AI.
+
+The tone should sound like a thoughtful person sharing honest reflections, not like AI text.
+
+Gain background knowledge from this info:
+"The first AI payment blockchain. Backed by @PayPal Ventures and @GeneralCatalyst.  
+Join our community: @Kite_Frens_Eco | http://testnet.gokite.ai"
+
+Make it sound natural, reflective, and smooth with clean line breaks between ideas.
+`;
+
+  const hours = [9, 12, 15, 18, 21, 23];
 
   // postTweet(promptForKite, "custom");
 
