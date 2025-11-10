@@ -1,20 +1,29 @@
 {
-  "name": "tgtwitter",
-  "version": "1.0.0",
-  "description": "",
+  "name": "zama-twitter-automation",
+  "version": "2.0.0",
+  "description": "Professional Twitter automation for Zama with influencer-style content and dynamic image fetching",
   "license": "ISC",
   "author": "Sham",
   "type": "module",
-  "main": "tg-tw.js",
+  "main": "zama.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node tg-tw.js",
-    "dev": "nodemon tg-tw.js"
+    "start": "node zama.js",
+    "dev": "nodemon zama.js",
+    "cli": "node cli.js",
+    "status": "node cli.js status",
+    "test": "node cli.js test",
+    "post": "node cli.js post",
+    "post-innovation": "node cli.js post-innovation",
+    "post-privacy": "node cli.js post-privacy",
+    "post-defi": "node cli.js post-defi",
+    "post-developer": "node cli.js post-developer",
+    "post-vision": "node cli.js post-vision",
+    "help": "node cli.js help",
+    "legacy": "node tg-tw.js"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
     "input": "^1.0.1",
-    "openai": "^5.23.1",
     "puppeteer": "^24.22.3",
     "telegram": "^2.26.22",
     "twitter-api-v2": "^1.27.0"

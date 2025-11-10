@@ -1,4 +1,4 @@
-// safeBot.js
+// safeBot.js - Optimized for Zama
 import { TwitterApi } from "twitter-api-v2";
 import { TelegramClient } from "telegram";
 import { StringSession } from "telegram/sessions/index.js";
@@ -6,6 +6,9 @@ import { StringSession } from "telegram/sessions/index.js";
 import dotenv from "dotenv";
 import OpenAI from "openai";
 import fs from "fs";
+import path from "path";
+import https from "https";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -31,9 +34,275 @@ const stringSession = new StringSession(process.env.TG_SESSION || "");
 //   connectionRetries: 5,
 // });
 
-// // ==== Duplicate message tracking ====
-// const postedMessages = new Set();
-// const RATE_LIMIT_MS = 15000; // 15 seconds between posts
+// // ==== Image cache and online fetching ====
+const DOWNLOADED_IMAGES_DIR = "downloaded_images";
+const MAX_CACHED_IMAGES = 20;
+const usedImages = new Set();
+
+// Ensure downloaded images directory exists
+if (!fs.existsSync(DOWNLOADED_IMAGES_DIR)) {
+  fs.mkdirSync(DOWNLOADED_IMAGES_DIR, { recursive: true });
+}
+
+// Download image from URL with proper headers
+function downloadImage(url, filepath) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(filepath);
+
+    const options = {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+      },
+    };
+
+    https
+      .get(url, options, (response) => {
+        // Check if response is successful
+        if (response.statusCode !== 200) {
+          reject(new Error(`Failed to download image: ${response.statusCode}`));
+          return;
+        }
+
+        response.pipe(file);
+        file.on("finish", () => {
+          file.close();
+          resolve(filepath);
+        });
+      })
+      .on("error", (err) => {
+        fs.unlink(filepath, () => {}); // Delete partial file
+        reject(err);
+      });
+  });
+}
+
+// Zama-related image search terms
+const zamaSearchTerms = [
+  "blockchain cryptography privacy security",
+  "homomorphic encryption technology data protection",
+  "secure data computation cloud privacy",
+  "blockchain confidentiality anonymous transactions",
+  "zero knowledge proof cryptography",
+  "encrypted smart contracts defi privacy",
+  "FHE fully homomorphic encryption",
+  "private blockchain transactions security",
+  "secure decentralized finance privacy",
+  "quantum computing cryptography security",
+  "cryptographic algorithms mathematical security",
+  "data encryption cybersecurity privacy",
+  "privacy technology blockchain security",
+  "secure computation cloud encryption",
+  "cryptographic protocols data protection",
+];
+
+// Search and download Zama-related image from multiple sources
+async function searchAndDownloadZamaImage() {
+  const searchTerm =
+    zamaSearchTerms[Math.floor(Math.random() * zamaSearchTerms.length)];
+  console.log(`Searching for image with term: ${searchTerm}`);
+
+  const methods = [
+    { name: "Pexels", func: downloadFromPexels },
+    { name: "Pixabay", func: downloadFromPixabay },
+    { name: "Lorem Picsum", func: downloadFromLoremPicsum },
+    { name: "Unsplash", func: downloadFromUnsplash },
+  ];
+
+  for (const method of methods) {
+    try {
+      console.log(`🔄 Trying ${method.name}...`);
+      const imagePath = await method.func(searchTerm);
+      return imagePath;
+    } catch (error) {
+      console.log(`❌ ${method.name} failed: ${error.message}`);
+      continue;
+    }
+  }
+
+  throw new Error("All image sources failed");
+}
+
+// Download from Pexels (with variety)
+async function downloadFromPexels(searchTerm) {
+  const pexelsImages = [
+    "https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Cyber security
+    "https://images.pexels.com/photos/5380642/pexels-photo-5380642.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Blockchain technology
+    "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Cryptocurrency
+    "https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Code security
+    "https://images.pexels.com/photos/730564/pexels-photo-730564.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Technology data
+    "https://images.pexels.com/photos/1108571/pexels-photo-1108571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Network security
+    "https://images.pexels.com/photos/3861972/pexels-photo-3861972.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Digital security
+  ];
+
+  const randomImage =
+    pexelsImages[Math.floor(Math.random() * pexelsImages.length)];
+  const filename = `zama_pexels_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.jpg`;
+  const filepath = path.join(DOWNLOADED_IMAGES_DIR, filename);
+
+  console.log(`Downloading from Pexels: ${randomImage}`);
+  await downloadImage(randomImage, filepath);
+
+  const stats = fs.statSync(filepath);
+  if (stats.size < 5000) {
+    fs.unlinkSync(filepath);
+    throw new Error("Pexels download too small");
+  }
+
+  console.log(`✅ Pexels success: ${filename} (${stats.size} bytes)`);
+  return filepath;
+}
+
+// Download from Pixabay (with variety)
+async function downloadFromPixabay(searchTerm) {
+  const pixabayImages = [
+    "https://cdn.pixabay.com/photo/2018/05/14/14/39/cyber-security-3400649_1280.jpg", // Cyber security
+    "https://cdn.pixabay.com/photo/2017/08/07/15/18/blockchain-2607229_1280.jpg", // Blockchain
+    "https://cdn.pixabay.com/photo/2016/11/19/15/40/cryptography-1839751_1280.jpg", // Cryptography
+    "https://cdn.pixabay.com/photo/2018/02/04/17/39/blockchain-3130166_1280.jpg", // Blockchain technology
+    "https://cdn.pixabay.com/photo/2018/09/12/12/17/bitcoin-3671287_1280.jpg", // Cryptocurrency
+    "https://cdn.pixabay.com/photo/2017/01/25/11/44/cyber-2008269_1280.jpg", // Network security
+    "https://cdn.pixabay.com/photo/2018/05/08/08/26/blockchain-3383807_1280.jpg", // Blockchain network
+  ];
+
+  const randomImage =
+    pixabayImages[Math.floor(Math.random() * pixabayImages.length)];
+  const filename = `zama_pixabay_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.jpg`;
+  const filepath = path.join(DOWNLOADED_IMAGES_DIR, filename);
+
+  console.log(`Downloading from Pixabay: ${randomImage}`);
+  await downloadImage(randomImage, filepath);
+
+  const stats = fs.statSync(filepath);
+  if (stats.size < 5000) {
+    fs.unlinkSync(filepath);
+    throw new Error("Pixabay download too small");
+  }
+
+  console.log(`✅ Pixabay success: ${filename} (${stats.size} bytes)`);
+  return filepath;
+}
+
+// Download from Lorem Picsum
+async function downloadFromLoremPicsum(searchTerm) {
+  const loremUrl = `https://picsum.photos/1200/630?random=${Math.floor(
+    Math.random() * 1000
+  )}`;
+
+  const filename = `zama_lorem_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.jpg`;
+  const filepath = path.join(DOWNLOADED_IMAGES_DIR, filename);
+
+  console.log(`Downloading from Lorem Picsum: ${loremUrl}`);
+  await downloadImage(loremUrl, filepath);
+
+  const stats = fs.statSync(filepath);
+  if (stats.size < 5000) {
+    fs.unlinkSync(filepath);
+    throw new Error("Lorem Picsum download too small");
+  }
+
+  console.log(`✅ Lorem Picsum success: ${filename} (${stats.size} bytes)`);
+  return filepath;
+}
+
+// Download from Unsplash (last resort)
+async function downloadFromUnsplash(searchTerm) {
+  const unsplashUrl = `https://source.unsplash.com/1200x630/?${encodeURIComponent(
+    searchTerm
+  )}&sig=${crypto.randomBytes(8).toString("hex")}`;
+
+  const filename = `zama_unsplash_${Date.now()}_${crypto
+    .randomBytes(4)
+    .toString("hex")}.jpg`;
+  const filepath = path.join(DOWNLOADED_IMAGES_DIR, filename);
+
+  console.log(`Downloading from Unsplash: ${unsplashUrl}`);
+  await downloadImage(unsplashUrl, filepath);
+
+  const stats = fs.statSync(filepath);
+  if (stats.size < 5000) {
+    fs.unlinkSync(filepath);
+    throw new Error("Unsplash download too small");
+  }
+
+  console.log(`✅ Unsplash success: ${filename} (${stats.size} bytes)`);
+  return filepath;
+}
+
+// Clean up old cached images to manage storage
+function cleanupOldImages() {
+  try {
+    const cachedFiles = fs
+      .readdirSync(DOWNLOADED_IMAGES_DIR)
+      .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f))
+      .map((f) => ({
+        name: f,
+        path: path.join(DOWNLOADED_IMAGES_DIR, f),
+        time: fs.statSync(path.join(DOWNLOADED_IMAGES_DIR, f)).mtime,
+      }))
+      .sort((a, b) => b.time - a.time);
+
+    // Keep only the most recent MAX_CACHED_IMAGES files
+    if (cachedFiles.length > MAX_CACHED_IMAGES) {
+      const filesToDelete = cachedFiles.slice(MAX_CACHED_IMAGES);
+      filesToDelete.forEach((file) => {
+        fs.unlinkSync(file.path);
+        console.log(`🗑️ Cleaned up old image: ${file.name}`);
+      });
+    }
+  } catch (error) {
+    console.error("⚠️ Error cleaning up old images:", error.message);
+  }
+}
+
+// Get Zama-related image (download new if needed)
+async function getZamaImage() {
+  // Clean up old images first
+  cleanupOldImages();
+
+  try {
+    // Download a fresh image for each post
+    const imagePath = await searchAndDownloadZamaImage();
+    return imagePath;
+  } catch (error) {
+    console.error("❌ Failed to download new image, checking cache...");
+
+    // Fallback to cached images if any exist
+    try {
+      const cachedFiles = fs
+        .readdirSync(DOWNLOADED_IMAGES_DIR)
+        .filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f));
+
+      if (cachedFiles.length > 0) {
+        const randomImage =
+          cachedFiles[Math.floor(Math.random() * cachedFiles.length)];
+        const imagePath = path.join(DOWNLOADED_IMAGES_DIR, randomImage);
+        console.log(`📎 Using cached image: ${randomImage}`);
+        return imagePath;
+      }
+    } catch (cacheError) {
+      console.error("❌ No cached images available");
+    }
+
+    // Final fallback - create a simple placeholder
+    console.log("⚠️ Creating fallback image...");
+    return await createFallbackImage();
+  }
+}
+
+// Create a simple fallback image
+async function createFallbackImage() {
+  // For now, we'll return null and let the bot post without an image
+  // In a production environment, you might want to create a branded placeholder
+  console.log("🚫 No image available, will post text only");
+  return null;
+}
 
 // message generate by openAI
 async function generateHumanContent(prompt) {
@@ -69,109 +338,188 @@ function normalizeAndLimit(text) {
 }
 
 // === Post to Twitter safely ===
-async function postTweet(promptCap, promptType = "news") {
+async function postTweet(promptCap, promptType = "zama") {
+  console.log("🔄 Starting tweet generation process...");
+
   const tweet = await generateHumanContent(promptCap);
-  if (!tweet) return;
+  if (!tweet) {
+    console.log("❌ No tweet content generated");
+    return;
+  }
 
   try {
     const tweetText = normalizeAndLimit(tweet);
-    console.log("Found tweet text:-----", tweetText);
+    console.log("📝 Generated tweet text:", tweetText);
 
-    const mediaIds = [
-      "public/image.png",
-      "public/image1.png",
-      "public/image4.jpg",
-      "public/image5.jpg",
-      "public/7.webp",
-      "public/8.webp",
-      "public/9.png",
-      "public/10.jpg",
-      "public/11.jpg",
-      "public/12.png",
-      "public/13.jpeg",
-      "public/14.png",
-      "public/15.jpg",
-      "public/16.jpg",
-      "public/18.jpeg",
-    ];
+    // Get Zama-related image dynamically
+    console.log("🖼️ Fetching Zama-related image...");
+    const imagePath = await getZamaImage();
 
-    function getRandomMediaId() {
-      return mediaIds[Math.floor(Math.random() * mediaIds.length)];
+    if (imagePath) {
+      console.log("📎 Using image:", imagePath);
+
+      try {
+        // Read and upload media
+        const mediaData = fs.readFileSync(imagePath);
+
+        const mediaResponse = await twitterClient.v2.uploadMedia(mediaData, {
+          media_category: "tweet_image",
+        });
+
+        // Check media key
+        if (!mediaResponse) {
+          console.error("❌ Media upload failed - no response");
+          throw new Error("Media upload failed");
+        }
+
+        console.log("📤 Media uploaded successfully:", mediaResponse);
+
+        await twitterClient.v2.tweet({
+          text: tweetText,
+          media: {
+            media_ids: [mediaResponse],
+          },
+        });
+        console.log("✅ Posted with image:", tweetText);
+      } catch (mediaErr) {
+        console.error("❌ Error with media upload:", mediaErr.message);
+        // Fallback to text-only post
+        await twitterClient.v2.tweet({
+          text: tweetText,
+        });
+        console.log("✅ Posted (text fallback):", tweetText);
+      }
+    } else {
+      console.log("📝 No image available, posting text only...");
+      await twitterClient.v2.tweet({
+        text: tweetText,
+      });
+      console.log("✅ Posted (text only):", tweetText);
     }
-
-    const syncFS = promptType == "custom" ? getRandomMediaId() : "image.png";
-
-    const mediaData = fs.readFileSync(syncFS);
-
-    const mediaResponse = await twitterClient.v2.uploadMedia(mediaData, {
-      media_category: "tweet_image",
-    });
-
-    // check media key
-    if (!mediaResponse) {
-      console.error("❌ Media upload failed", mediaResponse);
-      return;
-    }
-
-    // console.log({ mediaResponse });
-
-    await twitterClient.v2.tweet({
-      text: `.${tweetText}`,
-      media: {
-        media_ids: [mediaResponse],
-      },
-    });
-    console.log("✅ Posted:", `.${tweetText}`);
   } catch (err) {
-    console.error("❌ Error posting tweet:", err);
+    console.error("❌ Error posting tweet:", err.message);
+    // Final fallback attempt
+    try {
+      await twitterClient.v2.tweet({
+        text: tweetText,
+      });
+      console.log("✅ Emergency post successful:", tweetText);
+    } catch (textErr) {
+      console.error("❌ All posting attempts failed:", textErr.message);
+    }
   }
 }
 
-// === Safe scheduler: 5 random posts/day ===
+// === Safe scheduler: Multiple Zama-focused prompts ===
 function schedulePosts() {
-  // const promptForKite = ` Write a natural, human-like tweet thread about @GoKiteAI.
-  //       It should article type , don't use "—" it , don't use "in the rapidly, with no title or headings.
+  // Multiple Zama-focused prompts for variety
+  const zamaPrompts = [
+    // Privacy & Confidentiality focus
+    `
+Write a natural, educational post about blockchain privacy and confidentiality.
 
-  //       Use knowledge from https://gokite.ai/ but do not include or share the link in the output.
+Focus on how Zama is solving the transparency problem in blockchain with their innovative approach.
 
-  //       Requirements:
-  //       - Always tag @GoKiteAI just one time.
-  //       - Keep the tone professional, informative, always unique post and concise.
-  //       - Use proper punctuation, spacing, and line breaks for readability.
-  //       - Do not use emojis.
-  //       - Avoid generic or AI-generated sounding phrases.
-  //       `;
+Do not use any title or headings. Write in a conversational, thoughtful tone.
 
-  const promptForKite = `
-Write a short article-style post about @GoKiteAI.
+Requirements:
+- No emojis, no hashtags, no bullet points
+- Use natural line breaks for readability
+- Sound like a privacy advocate sharing insights
+- Mention how confidentiality is becoming essential in DeFi
+- Reference Zama's mission without being promotional
 
-Do not use any title or headings.
+Background: Zama brings confidentiality to DeFi using Fully Homomorphic Encryption (FHE), keeping onchain data encrypted even during processing.
+`,
 
-Write in one continuous flow, but use natural line breaks to make it readable.
+    // Technology & Innovation focus
+    `
+Share a technical insight about Fully Homomorphic Encryption (FHE) and blockchain.
 
-No emojis, no hashtags, do not use the "—" character, no bullet points, and no dashes.
+Write as if you're explaining an exciting technological development to someone interested in crypto innovation.
 
-Use simple, clear, human-like language.
+Requirements:
+- No emojis, no hashtags, no bullet points
+- Use clear, accessible language
+- Include natural line breaks
+- Sound genuinely enthusiastic about the technology
+- Focus on the innovation aspect of FHE
+- Keep it concise and engaging
 
-Use short sentences and natural line breaks to make the text easy to read.
+Background: Zama's FHE technology enables confidential smart contracts on any L1/L2, currently processing 20+ tps with potential for 10,000+ tps.
+`,
 
-Focus on how @GoKiteAI supports creators, builds trust, and grows a real community around AI.
+    // DeFi & Applications focus
+    `
+Write about the future of private DeFi and confidential transactions.
 
-The tone should sound like a thoughtful person sharing honest reflections, not like AI text.
+Focus on why privacy matters in decentralized finance and how new technologies are making it possible.
 
-Gain background knowledge from this info:
-"The first AI payment blockchain. Backed by @PayPal Ventures and @GeneralCatalyst.  
-Join our community: @Kite_Frens_Eco | http://testnet.gokite.ai"
+Requirements:
+- No emojis, no hashtags, no bullet points
+- Write in a reflective, forward-looking tone
+- Use natural line breaks for readability
+- Sound like someone who understands DeFi deeply
+- Focus on the practical benefits of confidential DeFi
 
-Make it sound natural, reflective, and smooth with clean line breaks between ideas.
-`;
+Background: Zama enables confidential DeFi, payments, and tokens with zero-knowledge privacy and public verifiability through FHE.
+`,
 
-  const hours = [9, 12, 15, 18, 21, 23];
+    // Community & Development focus
+    `
+Share thoughts about open-source development in the crypto privacy space.
 
-  // postTweet(promptForKite, "custom");
+Write about the importance of community-driven privacy solutions and developer-friendly tools.
 
-  hours.forEach((hour) => {
-    // add random delay (0–20 min) to look human
+Requirements:
+- No emojis, no hashtags, no bullet points
+- Sound like a developer or community member
+- Use natural line breaks
+- Be authentic and thoughtful
+- Focus on the open-source aspect
+- Keep it concise
+
+Background: Zama is an open-source cryptography company with a developer-focused approach, building practical FHE solutions since 2018.
+`,
+
+    // Industry impact focus
+    `
+Write about the growing importance of privacy solutions in the blockchain industry.
+
+Focus on how confidentiality is becoming a competitive advantage for blockchain projects.
+
+Requirements:
+- No emojis, no hashtags, no bullet points
+- Sound like an industry observer
+- Use natural line breaks
+- Be insightful but accessible
+- Focus on industry trends
+
+Background: Zama's testnet is live with mainnet coming Q4 2024, showing the industry is moving toward privacy-focused solutions.
+`,
+
+    // Educational focus
+    `
+Explain a simple concept about blockchain privacy that more people should understand.
+
+Write as if you're teaching someone something new and important about crypto.
+
+Requirements:
+- No emojis, no hashtags, no bullet points
+- Use simple, clear language
+- Include natural line breaks
+- Sound educational but not condescending
+- Focus on one key concept
+- Keep it accessible
+
+Background: Many people don't realize that blockchain transparency can be a security risk - companies like Zama are working to fix this with encryption.
+`,
+  ];
+
+  const hours = [9, 12, 15, 18, 21]; // 5 posts per day
+
+  hours.forEach((hour, index) => {
+    // Add random delay (0–20 min) to look human
     const delay = Math.floor(Math.random() * 20);
     const now = new Date();
     const target = new Date();
@@ -180,90 +528,16 @@ Make it sound natural, reflective, and smooth with clean line breaks between ide
     if (target < now) target.setDate(target.getDate() + 1);
 
     const msUntilPost = target - now;
+    const selectedPrompt = zamaPrompts[index % zamaPrompts.length];
+
     setTimeout(function run() {
-      postTweet(promptForKite, "custom");
+      postTweet(selectedPrompt, "zama");
       setTimeout(run, 24 * 60 * 60 * 1000); // repeat daily
     }, msUntilPost);
   });
 }
 
 schedulePosts();
-console.log("Bot started / posts 6 times daily with safe timing.");
-
-// --------------------------------------------------------------------------------
-
-// ==== Main Telegram Listener ====
-// (async () => {
-//   console.log("Connecting to Telegram...");
-//   await tgClient.start({
-//     phoneNumber: async () => await input.text("Enter your Telegram number: "),
-//     password: async () => await input.text("Enter password: "),
-//     phoneCode: async () => await input.text("Enter code: "),
-//     onError: (err) => console.log(err),
-//   });
-
-//   console.log("✅ Telegram connected");
-//   // tgClient.session.save();
-//   console.log(tgClient.session.save());
-//   const entitiy = process.env.ENTITY;
-
-//   const channel = await tgClient.getEntity(
-//     `@${entitiy ? entitiy : "tgtwitterbts"}`
-//   );
-//   // const channel = await tgClient.getEntity("@tgtwitterbts");
-
-//   let lastPostTime = 0;
-
-//   // captureMessageScreenshot("NEW LISIING FEED");
-
-//   tgClient.addEventHandler(async (update) => {
-//     try {
-//       if (
-//         update.message &&
-//         update.message.peerId?.channelId?.equals(channel.id)
-//       ) {
-//         const text = update.message.message;
-
-//         // Skip duplicates
-//         if (postedMessages.has(text)) return;
-//         postedMessages.add(text);
-
-//         // Rate limiting
-//         const now = Date.now();
-//         if (now - lastPostTime < RATE_LIMIT_MS) return;
-//         lastPostTime = now;
-
-//         console.log("New Telegram message detected:", text);
-
-//         // Capture screenshot
-//         // const screenshot = await captureMessageScreenshot(text);
-//         // if (!screenshot) return;
-
-//         // // Upload to Twitter
-//         // const mediaId = await twitterClient.v1.uploadMedia(screenshot, {
-//         //   type: "png",
-//         // });
-
-//         // // add
-//         // console.log({ mediaId });
-
-//         // await twitterClient.v1.tweet(text, { media_ids: mediaId });
-//         // Generate human-like content
-//         const promptForNews = `
-//         Rewrite the following text as a natural, don't use "we have a" text, human-like tweet that is engaging, readable, and professional.
-//         - Do NOT use emojis.
-//         - must be Use proper punctuation, spacing, and line breaks for readability.
-//         - Include relevant hashtags.
-//         - Make sure the text is 280 characters or less.
-//         - Avoid making it look AI-generated.
-
-//         Original text: "${text}"
-//         `;
-
-//         postTweet(promptForNews);
-//       }
-//     } catch (err) {
-//       console.error("Error posting:", err);
-//     }
-//   });
-// })();
+console.log(
+  "Zama bot started / posts 5 times daily with professional timing and image variety."
+);
