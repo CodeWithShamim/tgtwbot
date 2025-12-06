@@ -1,5 +1,5 @@
 // Configuration management for Zama Twitter Bot
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
@@ -10,7 +10,7 @@ export const config = {
     appSecret: process.env.TWITTER_APP_SECRET,
     accessToken: process.env.TWITTER_ACCESS_TOKEN,
     accessSecret: process.env.TWITTER_ACCESS_SECRET,
-    isVerified: process.env.TWITTER_VERIFIED === 'true' || true,
+    isVerified: process.env.TWITTER_VERIFIED === "true" || true,
   },
 
   // xAI Grok Configuration (Cost-effective alternative to OpenAI)
@@ -36,8 +36,8 @@ export const config = {
   // Content Configuration
   content: {
     maxTweetLength: 280,
-    postsPerDay: 5,
-    postingHours: [9, 12, 15, 18, 21],
+    postsPerDay: 3,
+    postingHours: [9, 15, 22],
     randomDelayMinutes: 20,
     // Zama-focused configuration
     twitterHandle: "@zama",
@@ -53,19 +53,16 @@ export const config = {
 
   // Zama-specific search terms for image fetching
   zamaSearchTerms: [
-    "blockchain cryptography privacy security",
-    "homomorphic encryption technology data protection",
-    "secure data computation cloud privacy",
-    "blockchain confidentiality anonymous transactions",
-    "zero knowledge proof cryptography",
-    "encrypted smart contracts defi privacy",
-    "FHE fully homomorphic encryption",
-    "private blockchain transactions security",
     "secure decentralized finance privacy",
     "quantum computing cryptography security",
     "cryptographic algorithms mathematical security",
+    "blockchain cryptography privacy security",
+    "homomorphic encryption technology data protection",
+    "secure data computation cloud privacy",
+    "zero knowledge proof cryptography",
+    "encrypted smart contracts defi privacy",
+    "FHE fully homomorphic encryption",
     "data encryption cybersecurity privacy",
-    "privacy technology blockchain security",
     "secure computation cloud encryption",
     "cryptographic protocols data protection",
   ],
@@ -75,13 +72,13 @@ export const config = {
     pexels: {
       enabled: true,
       images: [
-        "https://images.pexels.com/photos/1695052/pexels-photo-1695052.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Cyber security
+        "https://images.pexels.com/photos/60504/security-protection-anti-virus-software-60504.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Cyber security
         "https://images.pexels.com/photos/5380642/pexels-photo-5380642.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Blockchain technology
-        "https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Cryptocurrency
-        "https://images.pexels.com/photos/844124/pexels-photo-844124.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Code security
-        "https://images.pexels.com/photos/730564/pexels-photo-730564.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Technology data
-        "https://images.pexels.com/photos/1108571/pexels-photo-1108571.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Network security
-        "https://images.pexels.com/photos/3861972/pexels-photo-3861972.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Digital security
+        "https://images.pexels.com/photos/4808267/pexels-photo-4808267.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Cryptocurrency
+        "https://images.pexels.com/photos/8369835/pexels-photo-8369835.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Code security
+        "https://images.pexels.com/photos/30885763/pexels-photo-30885763.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Technology data
+        "https://images.pexels.com/photos/1148820/pexels-photo-1148820.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Network security
+        "https://images.pexels.com/photos/577585/pexels-photo-577585.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1", // Digital security
       ],
     },
     pixabay: {
@@ -110,17 +107,19 @@ export const config = {
 // Validate required environment variables
 export function validateConfig() {
   const required = [
-    'TWITTER_APP_KEY',
-    'TWITTER_APP_SECRET',
-    'TWITTER_ACCESS_TOKEN',
-    'TWITTER_ACCESS_SECRET',
-    'XAI_API_KEY' // Using xAI Grok instead of OpenAI for cost efficiency
+    "TWITTER_APP_KEY",
+    "TWITTER_APP_SECRET",
+    "TWITTER_ACCESS_TOKEN",
+    "TWITTER_ACCESS_SECRET",
+    "XAI_API_KEY", // Using xAI Grok instead of OpenAI for cost efficiency
   ];
 
-  const missing = required.filter(key => !process.env[key]);
+  const missing = required.filter((key) => !process.env[key]);
 
   if (missing.length > 0) {
-    throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    throw new Error(
+      `Missing required environment variables: ${missing.join(", ")}`
+    );
   }
 
   return true;
