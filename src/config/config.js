@@ -37,7 +37,7 @@ export const config = {
   content: {
     maxTweetLength: 280,
     postsPerDay: 3,
-    postingHours: [9, 15, 22],
+    postingHours: [12, 19, 2],
     randomDelayMinutes: 20,
     // Zama-focused configuration
     twitterHandle: "@zama",

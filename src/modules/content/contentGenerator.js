@@ -18,49 +18,48 @@ class ContentGenerator {
       {
         type: "developer",
         prompt: `
-Write an article-style post for developers about the opportunities @zama is creating for building privacy-first applications.
+Write a casual, engaging article-style post for developers about the exciting opportunities @zama is creating for building privacy-first applications. Make it sound like a real developer sharing their excitement about new tech.
 
 Format requirements:
-- Write as a short article with proper line breaks between paragraphs
-- No title or headings, just the article content
+- Write in a conversational, human-like tone (like a dev blog post)
 - Use double line breaks (\n\n) between paragraphs for readability
-- Write for fellow developers with appropriate terminology
 - Include @zama exactly once in the article
-- Make it technical but accessible to all devs
-- Write comprehensive, detailed articles (no character limit)
+- Make it feel authentic and genuinely enthusiastic
+- Use some developer slang/jargon naturally
+- Focus on the "wow factor" of what's now possible
 
 Content structure:
-- Start with current limitations in blockchain development
-- Introduce @zama's FHE libraries for developers
-- Explain what kind of applications become possible
-- Mention the benefits of confidential smart contracts
-- Brief call to action for developer community
+- Start with a relatable developer pain point about privacy limitations
+- Share the excitement about @zama's recent Series A funding and fhEVM launch
+- Explain what kinds of apps you can now build that were impossible before
+- Talk about confidential smart contracts in practical terms
+- End with an encouraging call to action for fellow devs
 
-Background: @zama provides FHE libraries that let developers build confidential smart contracts on any blockchain. This opens up entirely new categories of privacy-first applications that were impossible before, including confidential DeFi protocols, private NFT marketplaces, and enterprise blockchain solutions.
+Background: @zama just raised in Series B funding and launched the world's first fhEVM mainnet beta. They provide FHEVM libraries for Solidity developers to build confidential smart contracts with end-to-end encryption. Their $ZAMA token manages fees and staking, testnet is live now, with Ethereum mainnet coming Q4 2025. The protocol processes 20+ TPS today, targeting 500-1000 TPS with GPUs, and 100,000+ TPS with FHE ASICs. This enables confidential DeFi, tokenized real-world assets, sealed-bid auctions, and private governance while maintaining public verifiability.
         `,
       },
       // Tech Innovation & Zama's breakthrough
       {
         type: "innovation",
         prompt: `
-Write an article-style post about @zama's breakthrough in blockchain privacy and encryption technology.
+Write an exciting, human-like article-style post about @zama's game-changing breakthrough in blockchain privacy technology. Make it sound like someone who's genuinely amazed by this innovation.
 
 Format requirements:
-- Write as a short article with proper line breaks between paragraphs
-- No title or headings, just the article content
+- Write in an enthusiastic, "mind-blown" tone (like discovering something incredible)
 - Use double line breaks (\n\n) between paragraphs for readability
-- Keep conversational but informative tone
 - Include @zama exactly once in the article
-- Make it feel like an educational but engaging article
-- Write comprehensive, detailed articles (no character limit)
+- Make it feel like you're sharing a "holy grail" moment in crypto
+- Use natural excitement and wonder
+- Focus on why this changes everything we thought was possible
 
 Content structure:
-- Opening hook about blockchain privacy challenges
-- Introduction to @zama's solution
-- Key benefits of their technology
-- Brief conclusion about the future
+- Start with a "can you believe this?" hook about privacy problems
+- Share the excitement about @zama's fhEVM launch and major partnerships
+- Explain why FHE is like magic for blockchain privacy
+- Talk about real-world use cases that become possible
+- End with thoughts about how this reshapes blockchain's future
 
-Background: @zama is revolutionizing blockchain with Fully Homomorphic Encryption (FHE), allowing encrypted data to be processed without ever being decrypted. This enables confidential smart contracts, private DeFi, and secure transactions on any blockchain while maintaining verifiability.
+Background: @zama's breakthrough protocol enables true end-to-end encryption on public blockchains using Fully Homomorphic Encryption. Their fhEVM maintains composability while keeping transaction inputs and state completely private from node operators. With $73M in Series B funding, testnet live, and mainnet coming January 2026, they're solving blockchain's confidentiality dilemma. The technology supports confidential DeFi, sealed-bid auctions, private governance, and tokenized real-world assets while maintaining public verifiability and 128-bit post-quantum security.
         `,
       },
 
@@ -68,25 +67,24 @@ Background: @zama is revolutionizing blockchain with Fully Homomorphic Encryptio
       {
         type: "privacy",
         prompt: `
-Write an article-style post about blockchain privacy challenges and how @zama is providing the solution.
+Write a relatable, human-like article-style post about blockchain privacy problems and how @zama is finally solving them. Make it sound like someone who's been frustrated with lack of privacy and found the solution.
 
 Format requirements:
-- Write as a short article with proper line breaks between paragraphs
-- No title or headings, just the article content
+- Write in a "finally, someone gets it" tone
 - Use double line breaks (\n\n) between paragraphs for readability
-- Write with authority but make it accessible to readers
 - Include @zama exactly once in the article
-- Make it educational about privacy importance
-- Write comprehensive, detailed articles (no character limit)
+- Make it relatable to anyone who's felt exposed on blockchain
+- Use conversational, slightly passionate language about privacy
+- Focus on the relief and excitement of having real privacy
 
 Content structure:
-- Start with the privacy problem in current blockchains
-- Explain why transparency can be a security risk
-- Introduce @zama's privacy-preserving solution
-- Briefly explain the benefits of confidential transactions
-- Conclude with thoughts on privacy's importance
+- Start with personal frustration about blockchain transparency
+- Explain why "everything public" is actually dangerous
+- Share the excitement about @zama's privacy-preserving breakthrough
+- Talk about what confidential transactions mean for regular users
+- End with why this matters for the future of crypto adoption
 
-Background: Most blockchains expose everything publicly - a fundamental privacy flaw. @zama uses FHE to keep all transactions and smart contracts completely private while still being verifiable. This enables confidential DeFi, private trading, and enterprise adoption where privacy is critical.
+Background: Most blockchains expose everything publicly - a fundamental flaw that prevents mainstream adoption. @zama's protocol solves this with end-to-end encryption using FHE, so node operators never see your data while maintaining public verifiability. With testnet live and mainnet coming Q4 2025, they enable confidential payments, private governance, sealed-bid auctions, and tokenized real-world assets. Their $ZAMA token handles fees and staking, while the protocol targets 100,000+ TPS with FHE ASICs. This is the privacy solution blockchain has needed.
         `,
       },
 
@@ -94,25 +92,24 @@ Background: Most blockchains expose everything publicly - a fundamental privacy 
       {
         type: "defi",
         prompt: `
-Write an article-style post about how @zama is transforming DeFi with privacy technology.
+Write an exciting, insider-style article-style post about how @zama is completely transforming DeFi with privacy. Make it sound like a DeFi native who's seen the problems firsthand and is excited about the solution.
 
 Format requirements:
-- Write as a short article with proper line breaks between paragraphs
-- No title or headings, just the article content
+- Write in an enthusiastic "DeFi insider" tone (like sharing alpha with the community)
 - Use double line breaks (\n\n) between paragraphs for readability
-- Use appropriate DeFi terminology but keep it accessible
 - Include @zama exactly once in the article
-- Sound knowledgeable about current DeFi limitations
-- Write comprehensive, detailed articles (no character limit)
+- Use natural DeFi terminology but explain it accessibly
+- Make it feel like sharing game-changing information
+- Focus on the "this is what we've been waiting for" vibe
 
 Content structure:
-- Start with current DeFi privacy challenges
-- Explain why privacy is preventing mainstream adoption
-- Introduce @zama's solution for private DeFi
-- Mention specific benefits (private trading, lending, yield farming)
-- Brief conclusion about DeFi's future with privacy
+- Start with relatable DeFi frustration about front-running and privacy issues
+- Get excited about @zama's recent DEX integration and partnerships
+- Explain how private DeFi changes everything for traders and protocols
+- Talk about specific benefits like confidential trading and private yield farming
+- End with why this brings institutions and mainstream adoption to DeFi
 
-Background: DeFi can't go mainstream without privacy. @zama's FHE technology enables confidential trading, private lending, and anonymous yield farming - everything users want but can't get on public blockchains. This unlocks institutional adoption and protects user privacy while maintaining transparency where needed.
+Background: DeFi is crippled by front-running, MEV, and complete transparency that scares away institutions and traders. @zama's confidential DeFi solves this with end-to-end encryption - your trades, positions, and strategies stay private while remaining publicly verifiable. Their protocol enables confidential trading, sealed-bid auctions, private lending, and anonymous yield farming. With $73M in funding and mainnet coming Q4 2025, this is DeFi's privacy breakthrough for institutional adoption and protecting regular users from predatory MEV.
         `,
       },
 
@@ -120,25 +117,24 @@ Background: DeFi can't go mainstream without privacy. @zama's FHE technology ena
       {
         type: "vision",
         prompt: `
-Write an article-style post about how @zama is shaping the future of blockchain technology and privacy.
+Write an inspiring, forward-looking article-style post about how @zama is creating the future of blockchain with privacy. Make it sound like someone who's genuinely optimistic about where this technology is heading.
 
 Format requirements:
-- Write as a short article with proper line breaks between paragraphs
-- No title or headings, just the article content
+- Write in an inspiring, "future is here" tone
 - Use double line breaks (\n\n) between paragraphs for readability
-- Write with visionary but grounded perspective
 - Include @zama exactly once in the article
-- Sound knowledgeable about blockchain's trajectory
-- Write comprehensive, detailed articles (no character limit)
+- Make it feel like you're witnessing a historical moment
+- Use visionary language but keep it grounded and exciting
+- Focus on the transformative potential of what's coming
 
 Content structure:
-- Start with current state of blockchain transparency
-- Explain why privacy is becoming essential
-- Introduce @zama's role in the privacy revolution
-- Paint a picture of the privacy-first blockchain future
-- Brief conclusion about this technological evolution
+- Start with the realization that current blockchain transparency isn't sustainable
+- Share excitement about @zama's momentum (funding, partnerships, fhEVM launch)
+- Paint a picture of what blockchain becomes with privacy as the default
+- Talk about the massive adoption this enables (institutions, regular people)
+- End with why this is just the beginning of the privacy revolution
 
-Background: @zama is not just solving privacy - they're enabling the next evolution of blockchain where confidentiality is the standard. Their FHE technology will power private enterprise blockchains, confidential DeFi protocols, and secure Web3 applications that were previously impossible due to transparency constraints.
+Background: We're witnessing blockchain's privacy revolution with @zama's end-to-end encryption protocol. After raising $73M in Series B, they've launched testnet and have mainnet coming Q4 2025. Their fhEVM maintains composability while keeping all transaction data private from node operators, enabling confidential DeFi, private governance, sealed-bid auctions, and tokenized real-world assets. With $ZAMA token for fees/staking and a roadmap targeting 100,000+ TPS, they're making confidentiality the standard for blockchain's next evolution toward mainstream adoption.
         `,
       },
     ];
