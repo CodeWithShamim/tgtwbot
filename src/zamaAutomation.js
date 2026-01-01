@@ -1,11 +1,11 @@
-// Main Zama Twitter Automation - Modular Architecture v2.0
+// Main Multi-Project Twitter Automation - Modular Architecture v3.0
 import ImageManager from './modules/image/imageManager.js';
 import ContentGenerator from './modules/content/contentGenerator.js';
 import TwitterManager from './modules/twitter/twitterManager.js';
-import ZamaScheduler from './modules/scheduler/zamaScheduler.js';
+import MultiProjectScheduler from './modules/scheduler/zamaScheduler.js';
 import { config, validateConfig } from './config/config.js';
 
-class ZamaTwitterAutomation {
+class MultiProjectTwitterAutomation {
   constructor() {
     this.imageManager = null;
     this.contentGenerator = null;
@@ -17,8 +17,9 @@ class ZamaTwitterAutomation {
   // Initialize automation components
   async initialize() {
     try {
-      console.log('🚀 Initializing Zama Twitter Automation v2.0...');
-      console.log(`📋 Configuration loaded for ${config.bot.name} v${config.bot.version}`);
+      console.log(`🚀 Initializing Multi-Project Twitter Automation v${config.bot.version}...`);
+      console.log(`📋 Configuration loaded for ${config.bot.name}`);
+      console.log(`📋 Managing ${config.projects.length} projects: ${config.projects.map(p => p.name).join(', ')}`);
 
       // Validate configuration
       validateConfig();
@@ -34,18 +35,18 @@ class ZamaTwitterAutomation {
       this.twitterManager = new TwitterManager();
       console.log('✅ Twitter Manager initialized');
 
-      this.scheduler = new ZamaScheduler(
+      this.scheduler = new MultiProjectScheduler(
         this.contentGenerator,
         this.imageManager,
         this.twitterManager
       );
-      console.log('✅ Zama Scheduler initialized');
+      console.log('✅ Multi-Project Scheduler initialized');
 
       this.isInitialized = true;
-      console.log('🎉 Zama initialization complete!');
+      console.log('🎉 Multi-Project initialization complete!');
 
     } catch (error) {
-      console.error('❌ Zama initialization failed:', error.message);
+      console.error('❌ Multi-Project initialization failed:', error.message);
       throw error;
     }
   }
@@ -57,7 +58,7 @@ class ZamaTwitterAutomation {
     }
 
     try {
-      console.log('\n🏃 Starting Zama Twitter Automation...');
+      console.log('\n🏃 Starting Multi-Project Twitter Automation...');
 
       // Test components first
       const testResults = await this.scheduler.testComponents();
@@ -77,10 +78,12 @@ class ZamaTwitterAutomation {
       const nextPosts = this.scheduler.getNextPostTimes();
       console.log('\n📅 Next scheduled posts:');
       nextPosts.forEach((post, index) => {
-        console.log(`   ${index + 1}. ${post.timeString} (${Math.round(post.msUntil / 1000 / 60)} minutes from now)`);
+        const projectIndex = index % config.projects.length;
+        const project = config.projects[projectIndex];
+        console.log(`   ${index + 1}. ${post.timeString} (${project.name}) (${Math.round(post.msUntil / 1000 / 60)} minutes from now)`);
       });
 
-      console.log('\n✅ Zama automation is now running! Press Ctrl+C to stop.');
+      console.log('\n✅ Multi-Project automation is now running! Press Ctrl+C to stop.');
       console.log(`📊 Status: ${this.scheduler.getStatus().activeJobs} scheduled jobs`);
 
     } catch (error) {
@@ -91,24 +94,24 @@ class ZamaTwitterAutomation {
 
   // Stop the automation
   stop() {
-    console.log('\n🛑 Stopping Zama Twitter Automation...');
+    console.log('\n🛑 Stopping Multi-Project Twitter Automation...');
 
     if (this.scheduler) {
       this.scheduler.stopAllJobs();
     }
 
-    console.log('✅ Zama automation stopped successfully');
+    console.log('✅ Multi-Project automation stopped successfully');
   }
 
   // Post immediately (for testing)
-  async postNow(contentType = null) {
+  async postNow(projectName = null) {
     if (!this.isInitialized) {
-      throw new Error('Zama not initialized. Call initialize() first.');
+      throw new Error('Multi-Project bot not initialized. Call initialize() first.');
     }
 
     try {
       console.log('⚡ Posting immediately...');
-      const result = await this.scheduler.scheduleImmediatePost(contentType);
+      const result = await this.scheduler.scheduleImmediatePost(projectName);
       return result;
     } catch (error) {
       console.error('❌ Immediate post failed:', error.message);
@@ -122,7 +125,7 @@ class ZamaTwitterAutomation {
       return {
         initialized: false,
         running: false,
-        message: 'Zama not initialized',
+        message: 'Multi-Project bot not initialized',
       };
     }
 
@@ -133,10 +136,11 @@ class ZamaTwitterAutomation {
       initialized: true,
       running: schedulerStatus.isRunning,
       version: config.bot.version,
+      projects: config.projects.map(p => p.name),
       scheduledJobs: schedulerStatus.activeJobs,
       cachedImages,
       nextPosts: this.scheduler.getNextPostTimes().slice(0, 3), // Next 3 posts
-      contentTypes: this.contentGenerator.getContentTypes(),
+      projectList: this.contentGenerator.getProjects(),
     };
   }
 
@@ -154,18 +158,18 @@ class ZamaTwitterAutomation {
 }
 
 // Export for use in other files
-export default ZamaTwitterAutomation;
+export default MultiProjectTwitterAutomation;
 
 // Auto-start if this file is run directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const zama = new ZamaTwitterAutomation();
+  const bot = new MultiProjectTwitterAutomation();
 
   // Setup graceful shutdown
-  zama.setupGracefulShutdown();
+  bot.setupGracefulShutdown();
 
   // Start the automation
-  zama.start().catch((error) => {
-    console.error('❌ Failed to start Zama automation:', error.message);
+  bot.start().catch((error) => {
+    console.error('❌ Failed to start Multi-Project automation:', error.message);
     process.exit(1);
   });
 }

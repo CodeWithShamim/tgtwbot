@@ -1,38 +1,42 @@
 #!/usr/bin/env node
 
-// CLI Utility for Zama Twitter Automation Management
-import ZamaTwitterAutomation from './src/zamaAutomation.js';
+// CLI Utility for Multi-Project Twitter Automation Management
+import MultiProjectTwitterAutomation from './src/zamaAutomation.js';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
 const command = args[0];
+const projectArg = args[1];
 
 async function showHelp() {
   console.log(`
-🚀 Zama Twitter Automation CLI - Available Commands:
+🚀 Multi-Project Twitter Automation CLI - Available Commands:
 
-  start         Start the automation (default)
-  stop          Stop the automation
-  status        Show automation status
-  test          Test all components
-  post          Post immediately
-  post-innovation  Post innovation-focused content
-  post-privacy  Post privacy-focused content
-  post-defi     Post DeFi-focused content
-  post-developer Post developer-focused content
-  post-vision   Post vision-focused content
-  help          Show this help message
+  start                Start the automation (default)
+  stop                 Stop the automation
+  status               Show automation status
+  test                 Test all components
+  post                 Post immediately (rotates through projects)
+  post <project>       Post for a specific project
+  help                 Show this help message
+
+Available Projects:
+  Arcium               - The encrypted supercomputer
+  Polymarket           - The World's Largest Prediction Market
+  Base                 - A global economy built by all of us
 
 Examples:
   node cli.js start
   node cli.js status
-  node cli.js post-innovation
+  node cli.js post Arcium
+  node cli.js post Polymarket
+  node cli.js post Base
   node cli.js test
 `);
 }
 
 async function handleCommand() {
-  const zama = new ZamaTwitterAutomation();
+  const bot = new MultiProjectTwitterAutomation();
 
   try {
     switch (command) {
@@ -43,36 +47,39 @@ async function handleCommand() {
         break;
 
       case 'status':
-        console.log('📊 Getting Zama automation status...\n');
-        await zama.initialize();
-        const status = zama.getStatus();
+        console.log('📊 Getting Multi-Project automation status...\n');
+        await bot.initialize();
+        const status = bot.getStatus();
 
         console.log(`Version: ${status.version}`);
         console.log(`Initialized: ${status.initialized ? '✅' : '❌'}`);
         console.log(`Running: ${status.running ? '✅' : '❌'}`);
         console.log(`Active Jobs: ${status.scheduledJobs}`);
         console.log(`Cached Images: ${status.cachedImages}`);
+        console.log(`\n📋 Managing Projects: ${status.projects.join(', ')}`);
 
         if (status.nextPosts && status.nextPosts.length > 0) {
           console.log('\n📅 Next Posts:');
           status.nextPosts.forEach((post, index) => {
-            console.log(`   ${index + 1}. ${post.timeString}`);
+            const projectIndex = index % status.projects.length;
+            const project = status.projects[projectIndex];
+            console.log(`   ${index + 1}. ${post.timeString} (${project})`);
           });
         }
 
-        console.log(`\n📝 Content Types: ${status.contentTypes.join(', ')}`);
+        console.log(`\n📝 Available Projects: ${status.projectList.join(', ')}`);
         break;
 
       case 'test':
-        console.log('🧪 Testing Zama components...\n');
-        await zama.initialize();
-        await zama.scheduler.testComponents();
+        console.log('🧪 Testing Multi-Project components...\n');
+        await bot.initialize();
+        await bot.scheduler.testComponents();
         break;
 
       case 'post':
-        console.log('⚡ Posting immediately...\n');
-        await zama.initialize();
-        const result1 = await zama.postNow();
+        console.log(`⚡ Posting immediately${projectArg ? ` for ${projectArg}` : ''}...\n`);
+        await bot.initialize();
+        const result1 = await bot.postNow(projectArg);
         if (result1.success) {
           console.log('✅ Post completed successfully');
         } else {
@@ -80,66 +87,11 @@ async function handleCommand() {
         }
         break;
 
-      case 'post-innovation':
-        console.log('⚡ Posting innovation content...\n');
-        await zama.initialize();
-        const result2 = await zama.postNow('innovation');
-        if (result2.success) {
-          console.log('✅ Innovation post completed successfully');
-        } else {
-          console.log('❌ Innovation post failed:', result2.error);
-        }
-        break;
-
-      case 'post-privacy':
-        console.log('⚡ Posting privacy content...\n');
-        await zama.initialize();
-        const result3 = await zama.postNow('privacy');
-        if (result3.success) {
-          console.log('✅ Privacy post completed successfully');
-        } else {
-          console.log('❌ Privacy post failed:', result3.error);
-        }
-        break;
-
-      case 'post-defi':
-        console.log('⚡ Posting DeFi content...\n');
-        await zama.initialize();
-        const result4 = await zama.postNow('defi');
-        if (result4.success) {
-          console.log('✅ DeFi post completed successfully');
-        } else {
-          console.log('❌ DeFi post failed:', result4.error);
-        }
-        break;
-
-      case 'post-developer':
-        console.log('⚡ Posting developer content...\n');
-        await zama.initialize();
-        const result5 = await zama.postNow('developer');
-        if (result5.success) {
-          console.log('✅ Developer post completed successfully');
-        } else {
-          console.log('❌ Developer post failed:', result5.error);
-        }
-        break;
-
-      case 'post-vision':
-        console.log('⚡ Posting vision content...\n');
-        await zama.initialize();
-        const result6 = await zama.postNow('vision');
-        if (result6.success) {
-          console.log('✅ Vision post completed successfully');
-        } else {
-          console.log('❌ Vision post failed:', result6.error);
-        }
-        break;
-
       case 'start':
       case undefined:
-        console.log('🚀 Starting Zama Twitter Automation...\n');
-        zama.setupGracefulShutdown();
-        await zama.start();
+        console.log('🚀 Starting Multi-Project Twitter Automation...\n');
+        bot.setupGracefulShutdown();
+        await bot.start();
         break;
 
       default:

@@ -1,4 +1,4 @@
-// Image Management Module for Zama Twitter Bot
+// Image Management Module for Multi-Project Twitter Bot
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -11,6 +11,8 @@ class ImageManager {
     this.maxCachedImages = config.images.maxCachedImages;
     this.minFileSize = config.images.minFileSize;
     this.usedImages = new Set();
+    this.projects = config.projects;
+    this.currentProjectIndex = 0;
 
     this.ensureDownloadDir();
   }
@@ -62,7 +64,7 @@ class ImageManager {
     }
 
     const randomImage = pexels.images[Math.floor(Math.random() * pexels.images.length)];
-    const filename = `zama_pexels_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
+    const filename = `multi_pexels_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
     const filepath = path.join(this.downloadDir, filename);
 
     console.log(`📸 Downloading from Pexels: ${path.basename(randomImage)}`);
@@ -81,7 +83,7 @@ class ImageManager {
     }
 
     const randomImage = pixabay.images[Math.floor(Math.random() * pixabay.images.length)];
-    const filename = `zama_pixabay_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
+    const filename = `multi_pixabay_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
     const filepath = path.join(this.downloadDir, filename);
 
     console.log(`📸 Downloading from Pixabay: ${path.basename(randomImage)}`);
@@ -103,7 +105,7 @@ class ImageManager {
     const { width, height } = config.images.dimensions;
     const loremUrl = `${loremPicsum.baseUrl}/${width}/${height}?random=${randomId}`;
 
-    const filename = `zama_lorem_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
+    const filename = `multi_lorem_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
     const filepath = path.join(this.downloadDir, filename);
 
     console.log(`📸 Downloading from Lorem Picsum: ${randomId}`);
@@ -114,18 +116,22 @@ class ImageManager {
     return filepath;
   }
 
-  // Download from Unsplash
-  async downloadFromUnsplash() {
+  // Download from Unsplash with project-specific search terms
+  async downloadFromUnsplash(project = null) {
     const { unsplash } = config.imageSources;
     if (!unsplash.enabled) {
       throw new Error('Unsplash source not available');
     }
 
-    const searchTerm = config.zamaSearchTerms[Math.floor(Math.random() * config.zamaSearchTerms.length)];
+    // Get current project if not provided
+    const currentProject = project || this.projects[this.currentProjectIndex];
+    const projectSearchTerms = currentProject.searchTerms;
+
+    const searchTerm = projectSearchTerms[Math.floor(Math.random() * projectSearchTerms.length)];
     const { width, height } = config.images.dimensions;
     const unsplashUrl = `${unsplash.baseUrl}/${width}x${height}/?${encodeURIComponent(searchTerm)}&sig=${crypto.randomBytes(8).toString('hex')}`;
 
-    const filename = `zama_unsplash_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
+    const filename = `multi_unsplash_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
     const filepath = path.join(this.downloadDir, filename);
 
     console.log(`📸 Downloading from Unsplash with term: ${searchTerm}`);
@@ -190,15 +196,26 @@ class ImageManager {
     return null;
   }
 
-  // Main method to get Zama-related image
-  async getZamaImage() {
+  // Main method to get project-related image
+  async getProjectImage(project = null) {
     this.cleanupOldImages();
 
+    // Update project index
+    if (project) {
+      const projectIndex = this.projects.findIndex(p => p.name === project.name);
+      if (projectIndex !== -1) {
+        this.currentProjectIndex = projectIndex;
+      }
+    }
+
+    const currentProject = project || this.projects[this.currentProjectIndex];
+
     const downloadMethods = [
+      { name: 'Project Images', func: () => this.downloadFromProjectImages(currentProject) },
       { name: 'Pexels', func: () => this.downloadFromPexels() },
       { name: 'Pixabay', func: () => this.downloadFromPixabay() },
       { name: 'Lorem Picsum', func: () => this.downloadFromLoremPicsum() },
-      { name: 'Unsplash', func: () => this.downloadFromUnsplash() },
+      { name: 'Unsplash', func: () => this.downloadFromUnsplash(currentProject) },
     ];
 
     // Try to download a fresh image
@@ -223,6 +240,24 @@ class ImageManager {
     // No image available
     console.log('🚫 No image available, will post text only');
     return null;
+  }
+
+  // Download from project-specific images
+  async downloadFromProjectImages(project) {
+    if (!project.images || project.images.length === 0) {
+      throw new Error('No project-specific images configured');
+    }
+
+    const randomImage = project.images[Math.floor(Math.random() * project.images.length)];
+    const filename = `project_${project.name.toLowerCase()}_${Date.now()}_${crypto.randomBytes(4).toString('hex')}.jpg`;
+    const filepath = path.join(this.downloadDir, filename);
+
+    console.log(`📸 Downloading project-specific image for ${project.name}`);
+    await this.downloadImage(randomImage, filepath);
+
+    this.validateImage(filepath);
+    console.log(`✅ Project image success: ${filename}`);
+    return filepath;
   }
 
   // Get cached images count

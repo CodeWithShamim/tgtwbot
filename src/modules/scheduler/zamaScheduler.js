@@ -1,7 +1,7 @@
-// Zama Scheduler Module for Zama Twitter Automation
-import { config } from '../../config/config.js';
+// Scheduler Module for Multi-Project Twitter Bot
+import { config } from "../../config/config.js";
 
-class ZamaScheduler {
+class MultiProjectScheduler {
   constructor(contentGenerator, imageManager, twitterManager) {
     this.contentGenerator = contentGenerator;
     this.imageManager = imageManager;
@@ -12,7 +12,7 @@ class ZamaScheduler {
 
   // Schedule posts throughout the day
   scheduleDailyPosts() {
-    console.log('📅 Setting up daily posting schedule...');
+    console.log("📅 Setting up daily posting schedule...");
 
     const { postingHours, postsPerDay, randomDelayMinutes } = config.content;
 
@@ -48,11 +48,19 @@ class ZamaScheduler {
 
       this.scheduledJobs.set(jobId, job);
 
-      console.log(`⏰ Scheduled post ${index + 1} for ${targetTime.toLocaleString()} (${jobId})`);
+      console.log(
+        `⏰ Scheduled post ${
+          index + 1
+        } for ${targetTime.toLocaleString()} (${jobId})`
+      );
     });
 
     this.isRunning = true;
-    console.log(`✅ Scheduled ${postsPerDay} posts per day at hours: [${postingHours.join(', ')}]`);
+    console.log(
+      `✅ Scheduled ${postsPerDay} posts per day at hours: [${postingHours.join(
+        ", "
+      )}]`
+    );
   }
 
   // Schedule recurring post
@@ -70,66 +78,82 @@ class ZamaScheduler {
       console.log(`\n🚀 Executing scheduled post: ${jobId}`);
       console.log(`⏰ Time: ${new Date().toLocaleString()}`);
 
-      // Generate content
+      // Generate content (will cycle through projects)
       const contentResult = await this.contentGenerator.generateContent();
       if (!contentResult || !contentResult.content) {
-        console.error('❌ Failed to generate content');
+        console.error("❌ Failed to generate content");
         return;
       }
 
       // Normalize content for Twitter
-      const tweetText = this.contentGenerator.normalizeText(contentResult.content);
-      console.log(`📝 Generated ${contentResult.type} content: ${tweetText.substring(0, 100)}...`);
+      const tweetText = contentResult.content;
+      console.log(
+        `📝 Generated ${contentResult.project} content: ${tweetText.substring(
+          0,
+          100
+        )}...`
+      );
+
+      // Get project for image
+      const project = config.projects.find(
+        (p) => p.name === contentResult.project
+      );
 
       // Get image
-      console.log('🖼️ Fetching image...');
-      const imagePath = await this.imageManager.getZamaImage();
+      console.log("🖼️ Fetching image...");
+      const imagePath = await this.imageManager.getProjectImage(project);
 
       // Post to Twitter with fallback logic
       if (imagePath) {
-        console.log('📸 Image available, posting with media...');
+        console.log("📸 Image available, posting with media...");
         await this.twitterManager.postTweetWithFallback(tweetText, imagePath);
       } else {
-        console.log('📝 No image available, posting text only...');
+        console.log("📝 No image available, posting text only...");
         await this.twitterManager.postTweetWithFallback(tweetText);
       }
 
       console.log(`✅ Post completed successfully: ${jobId}`);
-
     } catch (error) {
       console.error(`❌ Error executing post ${jobId}:`, error.message);
 
       // Try to post a simple fallback message
       try {
-        const fallbackText = "Exploring how #privacy and #encryption are reshaping blockchain technology. The future of confidential transactions is here.";
+        const fallbackText =
+          "Exploring the future of crypto and blockchain technology. Innovation is happening across multiple fronts!";
         await this.twitterManager.postTweetWithFallback(fallbackText);
-        console.log('✅ Fallback post completed');
+        console.log("✅ Fallback post completed");
       } catch (fallbackError) {
-        console.error('❌ Even fallback post failed:', fallbackError.message);
+        console.error("❌ Even fallback post failed:", fallbackError.message);
       }
     }
   }
 
   // Schedule a single immediate post (for testing)
-  async scheduleImmediatePost(templateType = null) {
+  async scheduleImmediatePost(projectName = null) {
     try {
-      console.log('⚡ Scheduling immediate post...');
+      console.log("⚡ Scheduling immediate post...");
 
       let contentResult;
-      if (templateType) {
-        contentResult = await this.contentGenerator.getContentByType(templateType);
+      if (projectName) {
+        contentResult = await this.contentGenerator.getContentByProject(
+          projectName
+        );
       } else {
         contentResult = await this.contentGenerator.getRandomContent();
       }
 
       if (!contentResult || !contentResult.content) {
-        throw new Error('Failed to generate content');
+        throw new Error("Failed to generate content");
       }
 
-      const tweetText = this.contentGenerator.normalizeText(contentResult.content);
+      const tweetText = contentResult.content;
       console.log(`📝 Generated content: ${tweetText.substring(0, 100)}...`);
 
-      const imagePath = await this.imageManager.getZamaImage();
+      // Get project for image
+      const project = config.projects.find(
+        (p) => p.name === contentResult.project
+      );
+      const imagePath = await this.imageManager.getProjectImage(project);
 
       if (imagePath) {
         await this.twitterManager.postTweetWithFallback(tweetText, imagePath);
@@ -137,18 +161,17 @@ class ZamaScheduler {
         await this.twitterManager.postTweetWithFallback(tweetText);
       }
 
-      console.log('✅ Immediate post completed');
+      console.log("✅ Immediate post completed");
       return { success: true, content: contentResult };
-
     } catch (error) {
-      console.error('❌ Error in immediate post:', error.message);
+      console.error("❌ Error in immediate post:", error.message);
       return { success: false, error: error.message };
     }
   }
 
   // Stop all scheduled jobs
   stopAllJobs() {
-    console.log('🛑 Stopping all scheduled jobs...');
+    console.log("🛑 Stopping all scheduled jobs...");
 
     this.scheduledJobs.forEach((job, jobId) => {
       clearTimeout(job);
@@ -159,7 +182,7 @@ class ZamaScheduler {
     this.scheduledJobs.clear();
     this.isRunning = false;
 
-    console.log('✅ All scheduled jobs stopped');
+    console.log("✅ All scheduled jobs stopped");
   }
 
   // Get scheduler status
@@ -175,7 +198,7 @@ class ZamaScheduler {
 
   // Test all components
   async testComponents() {
-    console.log('\n🧪 Testing Zama components...');
+    console.log("\n🧪 Testing Multi-Project bot components...");
 
     const results = {
       content: false,
@@ -185,41 +208,41 @@ class ZamaScheduler {
 
     try {
       // Test content generation
-      console.log('\n📝 Testing content generation...');
+      console.log("\n📝 Testing content generation...");
       const content = await this.contentGenerator.getRandomContent();
       if (content && content.content) {
-        console.log('✅ Content generation working');
+        console.log("✅ Content generation working");
         results.content = true;
       }
     } catch (error) {
-      console.error('❌ Content generation failed:', error.message);
+      console.error("❌ Content generation failed:", error.message);
     }
 
     try {
       // Test image fetching
-      console.log('\n🖼️ Testing image fetching...');
-      const image = await this.imageManager.getZamaImage();
+      console.log("\n🖼️ Testing image fetching...");
+      const image = await this.imageManager.getProjectImage();
       if (image) {
-        console.log('✅ Image fetching working');
+        console.log("✅ Image fetching working");
         results.image = true;
       }
     } catch (error) {
-      console.error('❌ Image fetching failed:', error.message);
+      console.error("❌ Image fetching failed:", error.message);
     }
 
     try {
       // Test Twitter connection
-      console.log('\n🐦 Testing Twitter connection...');
+      console.log("\n🐦 Testing Twitter connection...");
       const connected = await this.twitterManager.testConnection();
       if (connected) {
-        console.log('✅ Twitter connection working');
+        console.log("✅ Twitter connection working");
         results.twitter = true;
       }
     } catch (error) {
-      console.error('❌ Twitter connection failed:', error.message);
+      console.error("❌ Twitter connection failed:", error.message);
     }
 
-    console.log('\n📊 Test Results:', results);
+    console.log("\n📊 Test Results:", results);
     return results;
   }
 
@@ -230,9 +253,14 @@ class ZamaScheduler {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const nextTimes = config.content.postingHours.map(hour => {
+    const nextTimes = config.content.postingHours.map((hour) => {
       const scheduledTime = new Date(today);
-      scheduledTime.setHours(hour, Math.floor(Math.random() * config.content.randomDelayMinutes), 0, 0);
+      scheduledTime.setHours(
+        hour,
+        Math.floor(Math.random() * config.content.randomDelayMinutes),
+        0,
+        0
+      );
 
       if (scheduledTime <= now) {
         scheduledTime.setDate(scheduledTime.getDate() + 1);
@@ -250,4 +278,4 @@ class ZamaScheduler {
   }
 }
 
-export default ZamaScheduler;
+export default MultiProjectScheduler;
